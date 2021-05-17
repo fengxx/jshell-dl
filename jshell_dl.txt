@@ -1,0 +1,29 @@
+import java.io.*;
+import java.net.URL;
+import java.util.zip.GZIPInputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
+
+String DOWNLOAD_LINK = "https://github.com/fengxx/jshell-dl/raw/master/busybox_static.gz";
+String TARGET_LOC = "/tmp/busybox";
+if(new File(TARGET_LOC).exists()){
+    System.exit(0);
+}
+System.out.println("downloading "+DOWNLOAD_LINK);
+try (InputStream inStream = new GZIPInputStream(new URL(DOWNLOAD_LINK).openStream())) {
+    try (OutputStream outStream = new FileOutputStream(TARGET_LOC)) {
+        byte[] buf = new byte[1024];
+        int len = 0;
+        while ((len = inStream.read(buf)) != -1) {
+            outStream.write(buf, 0, len);
+        }
+    }
+}
+//chmod 700
+Files.setPosixFilePermissions(Paths.get(TARGET_LOC), EnumSet.range(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_EXECUTE));
+new File("/tmp/bin/").mkdir();
+//create symbolic links
+Runtime.getRuntime().exec(new String[]{"/tmp/busybox", "--install", "-s", "/tmp/bin"});
+System.exit(0);
